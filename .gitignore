@@ -1,0 +1,13 @@
+# Private source notes used to shape the public project brief.
+/TrustClaw Project.md
+/Similar to TrustClaw.md
+/Know-Your-Agent.md
+
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/
+.DS_Store
+
