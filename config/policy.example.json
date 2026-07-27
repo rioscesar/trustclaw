@@ -1,0 +1,4 @@
+{
+  "version": "trustclaw-demo-v1",
+  "bulkDeleteThreshold": 100
+}

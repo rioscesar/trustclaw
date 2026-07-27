@@ -10,9 +10,9 @@ The goal is a focused demo in roughly eight weeks, not a startup-grade platform.
 
 ## Week 2 — Gateway
 
-- Scaffold the pnpm/TypeScript workspace.
-- Build the OpenClaw adapter and gateway interception path.
-- Record before-and-after events for every governed tool call.
+- [x] Scaffold the pnpm/TypeScript workspace.
+- [x] Build a runtime-neutral simulated adapter and gateway interception path.
+- [x] Record before-and-after events for every governed tool call.
 
 ## Week 3 — OpenTelemetry
 
@@ -21,18 +21,19 @@ The goal is a focused demo in roughly eight weeks, not a startup-grade platform.
 
 ## Week 4 — Risk engine
 
-- Add versioned deterministic policy rules.
-- Cover low, medium, high, and critical dispositions with tests.
+- [x] Add the first versioned deterministic policy rules.
+- [x] Cover medium and critical approval dispositions plus denial paths.
 
 ## Week 5 — Approval
 
-- Bind approvals to a request digest and expiration.
-- Support one- and two-approver flows.
+- [x] Bind approvals to a request digest and expiration.
+- [x] Support one- and two-approver enforcement.
 
 ## Week 6 — Tamper-evident audit
 
-- Persist append-only events in PostgreSQL.
-- Chain events with SHA-256 digests and implement verification.
+- [x] Persist append-only events in memory for the first vertical slice.
+- [x] Chain events with SHA-256 digests and implement verification.
+- Replace the in-memory adapter with PostgreSQL only after the contracts settle.
 
 ## Week 7 — Identity
 
@@ -52,4 +53,3 @@ The goal is a focused demo in roughly eight weeks, not a startup-grade platform.
 - General-purpose agent framework
 - Claims of database immutability
 - Production multi-tenancy or enterprise identity federation
-
