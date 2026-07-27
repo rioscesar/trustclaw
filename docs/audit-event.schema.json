@@ -2,54 +2,42 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://trustclaw.dev/schemas/audit-event.schema.json",
   "title": "TrustClaw Audit Event",
-  "description": "A versioned, attributable event in a tamper-evident audit chain.",
+  "description": "A versioned event in a tamper-evident audit chain. Metadata must be redacted and contain no sensitive raw tool arguments.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version",
-    "event_id",
-    "trace_id",
-    "agent_id",
-    "occurred_at",
-    "event_type",
-    "action",
-    "risk",
-    "decision",
-    "policy_version",
-    "previous_digest",
+    "schemaVersion",
+    "eventId",
+    "eventType",
+    "timestamp",
+    "requestId",
+    "metadata",
+    "previousDigest",
     "digest"
   ],
   "properties": {
-    "schema_version": { "const": "1.0" },
-    "event_id": { "type": "string", "format": "uuid" },
-    "trace_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
-    "agent_id": { "type": "string", "minLength": 1, "maxLength": 255 },
-    "owner_id": { "type": "string", "minLength": 1, "maxLength": 255 },
-    "occurred_at": { "type": "string", "format": "date-time" },
-    "event_type": {
+    "schemaVersion": { "const": "1.0" },
+    "eventId": { "type": "string", "minLength": 1 },
+    "eventType": {
       "type": "string",
       "enum": ["request", "policy_decision", "approval", "execution", "outcome"]
     },
-    "action": { "type": "string", "minLength": 1, "maxLength": 255 },
-    "risk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
-    "decision": { "type": "string", "enum": ["allow", "deny", "approval_required"] },
-    "approved_by": {
-      "type": "array",
-      "items": { "type": "string", "minLength": 1, "maxLength": 255 },
-      "uniqueItems": true
-    },
-    "policy_version": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "request_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-    "previous_digest": {
-      "type": ["string", "null"],
-      "pattern": "^sha256:[0-9a-f]{64}$"
-    },
-    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-    "attributes": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "requestId": { "type": "string", "minLength": 1 },
+    "metadata": {
       "type": "object",
-      "description": "Redacted, non-secret metadata only.",
+      "description": "Redacted, non-sensitive metadata only.",
       "additionalProperties": true
+    },
+    "previousDigest": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
     }
   }
 }
-

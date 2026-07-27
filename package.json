@@ -1,0 +1,35 @@
+{
+  "name": "trustclaw",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "demo": "pnpm build && tsx packages/cli/src/demo.ts --yes",
+    "demo:interactive": "pnpm build && tsx packages/cli/src/demo.ts",
+    "demo:tamper": "pnpm build && tsx packages/cli/src/tamper-demo.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "pnpm build && vitest run",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@trustclaw/contracts": "workspace:*",
+    "@trustclaw/gateway": "workspace:*",
+    "@trustclaw/policy-engine": "workspace:*",
+    "@types/node": "^24.1.0",
+    "eslint": "^9.32.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0",
+    "vitest": "^3.2.4"
+  }
+}

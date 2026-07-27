@@ -1,6 +1,6 @@
 # Contributing
 
-TrustClaw is in its design phase. Please open an issue before implementing a new subsystem so the change can be checked against the demo scope and trust boundary.
+TrustClaw has one executable in-memory vertical slice. Please open an issue before implementing a new subsystem so the change can be checked against the demo scope and trust boundary.
 
 ## Principles
 
@@ -9,4 +9,3 @@ TrustClaw is in its design phase. Please open an issue before implementing a new
 - Back behavior claims with tests or reproducible commands.
 - Keep OpenClaw-specific code behind an adapter.
 - Avoid dependencies until the use case demonstrates a need.
-

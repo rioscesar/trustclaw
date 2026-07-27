@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+pnpm-lock.yaml
+TrustClaw Project.md
+Similar to TrustClaw.md
+Know-Your-Agent.md

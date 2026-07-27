@@ -2,7 +2,7 @@
 
 Trust, governance, and provenance for autonomous AI systems.
 
-TrustClaw is an experimental trust plane for [OpenClaw](https://openclaw.ai/). It evaluates tool calls before execution, routes risky actions through human approval, emits OpenTelemetry traces, and writes a tamper-evident audit history.
+TrustClaw is an experimental trust plane for [OpenClaw](https://openclaw.ai/). It evaluates tool calls before execution, routes risky actions through human approval, and writes a tamper-evident audit history. The first milestone uses a simulated tool and in-memory adapters.
 
 ## The problem
 
@@ -30,8 +30,8 @@ The first milestone is a single end-to-end scenario:
 1. A user asks OpenClaw to delete email older than one year.
 2. TrustClaw intercepts the tool call and assigns medium risk.
 3. A human approves the request.
-4. OpenClaw executes the action.
-5. The request, decision, approval, execution, and outcome appear in one trace.
+4. A simulated handler executes the action.
+5. The request, decision, approval, execution, and outcome appear in one audit chain.
 6. A tamper-evident audit event is persisted.
 
 ## Architecture
@@ -44,29 +44,61 @@ flowchart LR
     Gateway --> Policy[Policy and risk engine]
     Policy --> Approval[Human approval]
     Gateway --> Tools
-    Gateway --> Audit[(PostgreSQL audit store)]
-    Gateway --> OTel[OpenTelemetry]
+    Gateway --> Audit[(Audit store)]
+    Gateway -. future .-> OTel[OpenTelemetry]
 ```
 
 See [the architecture notes](docs/architecture.md), [audit event schema](docs/audit-event.schema.json), and [roadmap](ROADMAP.md).
 
-## Planned stack
+## Implemented milestone
+
+The first executable vertical slice:
+
+- Converts a simulated `gmail.delete_email` proposal into a runtime-neutral authorization request.
+- Canonicalizes the request and binds approvals to its SHA-256 digest and expiration.
+- Applies a versioned deterministic policy: year-old email deletion is medium risk; bulk deletion above the configured threshold is critical and requires two distinct approvers.
+- Executes only after sufficient valid approval and never contacts Gmail.
+- Records request, decision, approval, execution, and outcome events in an in-memory SHA-256 hash chain.
+- Verifies valid chains and detects changed, reordered, removed, or incorrectly linked events.
+
+The chain is tamper-evident, not immutable. An attacker who can rewrite all in-memory state is outside this milestone's guarantees.
+
+## Setup and demos
+
+Requirements: Node.js 24 and pnpm 11.
+
+```bash
+pnpm install
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm demo
+pnpm demo:tamper
+```
+
+`pnpm demo` uses a documented non-interactive approval suitable for CI. Run `pnpm demo:interactive` to answer the approval prompt yourself. Every tool action is simulated.
+
+The bulk-delete threshold has no implicit default and must be configured. The
+value in `config/policy.example.json` is synthetic demo data, not a production
+recommendation.
+
+## Stack
 
 - Node.js 24 and TypeScript ESM
 - pnpm
-- OpenClaw plugin SDK
-- PostgreSQL
-- OpenTelemetry, with an OTLP-compatible backend such as Jaeger or Grafana Tempo
+- OpenClaw-compatible adapter boundary; the SDK is not installed yet
 - TypeBox/JSON Schema for contracts
 - Vitest
+- ESLint and Prettier
 
-This matches OpenClaw's source and plugin development conventions. Policy evaluation starts as deterministic TypeScript rules; an OPA adapter remains a later option if the demo proves the need.
+The implementation uses interfaces so PostgreSQL, OpenTelemetry, and an OpenClaw adapter can be added later. They are not dependencies of this milestone.
 
 ## Status
 
-Design phase. There is intentionally no executable product code yet.
+Milestone 1 is executable and tested, but remains a local demonstration—not a production-ready security boundary.
 
 ## License
 
 [Apache License 2.0](LICENSE)
-

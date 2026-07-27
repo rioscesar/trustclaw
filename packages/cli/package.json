@@ -1,0 +1,11 @@
+{
+  "name": "@trustclaw/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@trustclaw/contracts": "workspace:*",
+    "@trustclaw/gateway": "workspace:*",
+    "@trustclaw/policy-engine": "workspace:*"
+  }
+}
