@@ -22,6 +22,8 @@ file contains only TrustClaw-specific constraints.
   digests.
 - Authorization decisions must be deterministic and explainable; never use a
   model or probabilistic classifier.
+- Security-sensitive thresholds must be configured explicitly unless a
+  documented observation justifies a default value.
 - Add positive and negative controls for authorization, approval, and audit
   verification behavior.
 

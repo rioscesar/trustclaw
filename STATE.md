@@ -2,7 +2,7 @@
 
 ## Current stage
 
-Milestone 1 implementation and verification
+Stage 6 complete — draft PR awaiting human review
 
 ## Completed
 
@@ -11,11 +11,21 @@ Milestone 1 implementation and verification
 - Added architecture, audit schema, roadmap, contribution guidance, and license.
 - Implemented runtime-neutral contracts, deterministic policy, approval enforcement, a simulated tool handler, and an in-memory audit hash chain.
 - Added CLI demos, 24 unit/integration tests, and GitHub Actions validation.
+- Opened draft PR [#1](https://github.com/rioscesar/trustclaw/pull/1) from
+  `agent/trustclaw-milestone-1`.
 
 ## Next
 
-- Review the milestone contracts before building a real OpenClaw adapter.
-- Add OpenTelemetry spans behind an interface without exporting sensitive arguments.
+- Human reviews draft PR #1; Codex must not merge it.
+- After the milestone is approved, review the contracts before separately
+  planning a real OpenClaw adapter.
+
+## Decisions
+
+- The repository inherits the lifecycle from `D:\AGENTS.md`; the local
+  `AGENTS.md` remains a thin TrustClaw-specific router.
+- The bulk-delete threshold has no implicit default. `100` exists only as
+  synthetic demo configuration.
 
 ## Learnings
 
