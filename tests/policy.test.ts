@@ -14,7 +14,7 @@ function request(
     requestedAt: "2026-07-26T18:00:00.000Z",
     rawArguments: {},
     approvalContext: { summary: "redacted" },
-    canonicalContent: { action, olderThanDays, emailCount },
+    parameters: { olderThanDays, emailCount },
   });
 }
 

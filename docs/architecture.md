@@ -17,7 +17,7 @@ The milestone's CLI converts a simulated OpenClaw-like tool proposal into TrustC
 
 ### TrustClaw gateway
 
-The orchestration boundary for policy evaluation, approvals, tool dispatch, telemetry, and audit persistence. The initial implementation is a small Node.js library rather than a network service or broad platform.
+The orchestration boundary for policy evaluation, approvals, tool dispatch, telemetry, and audit persistence. It snapshots and validates the governed request before calling any adapter, so the arguments passed to the tool handler cannot be changed by the caller or policy adapter during approval. The initial implementation is a small Node.js library rather than a network service or broad platform.
 
 ### Policy and risk engine
 
@@ -38,7 +38,7 @@ The first workflow may be CLI-based. Approval records bind the approver, decisio
 
 ### Audit store
 
-An append-only in-memory adapter stores audit events. Each event includes the previous event digest and its own digest, producing a tamper-evident chain. Verification detects changed contents, reordering, middle-event removal, and incorrect digests. This is not a blockchain and does not claim immutability. PostgreSQL is a future adapter.
+An append-only in-memory adapter stores audit events. Each event includes the previous event digest and its own digest, producing a tamper-evident chain. Verification detects changed contents, reordering, middle-event removal, and incorrect digests. The storage interface permits synchronous or asynchronous implementations. This is not a blockchain and does not claim immutability. PostgreSQL is a future adapter.
 
 ### Observability
 

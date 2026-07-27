@@ -20,6 +20,9 @@ file contains only TrustClaw-specific constraints.
 - Construct canonical request content internally and explicitly before hashing.
   Never rely on ordinary `JSON.stringify` insertion order for security-relevant
   digests.
+- Snapshot and validate the authorization request before the first asynchronous
+  adapter boundary, and do not expose the execution snapshot to mutable policy
+  adapters.
 - Authorization decisions must be deterministic and explainable; never use a
   model or probabilistic classifier.
 - Security-sensitive thresholds must be configured explicitly unless a

@@ -1,4 +1,8 @@
-import { isApprovalRecord, type ApprovalRecord } from "@trustclaw/contracts";
+import {
+  isApprovalRecord,
+  isValidTimestamp,
+  type ApprovalRecord,
+} from "@trustclaw/contracts";
 
 export interface ApprovalValidation {
   valid: boolean;
@@ -11,7 +15,22 @@ export function validateApprovals(
   requestDigest: string,
   requiredApprovals: number,
   now: Date,
+  approvalRequestExpiresAt: string,
 ): ApprovalValidation {
+  if (!isValidTimestamp(approvalRequestExpiresAt)) {
+    return invalid(
+      "MALFORMED_APPROVAL_REQUEST",
+      "The approval request expiration is malformed.",
+    );
+  }
+  const requestExpiresAt = Date.parse(approvalRequestExpiresAt);
+  if (requestExpiresAt <= now.getTime()) {
+    return invalid(
+      "APPROVAL_REQUEST_EXPIRED",
+      "The approval request has expired.",
+    );
+  }
+
   const approvers = new Set<string>();
 
   for (const value of approvals) {
@@ -27,6 +46,18 @@ export function validateApprovals(
     }
     if (approval.decision !== "approve") {
       return invalid("APPROVAL_REJECTED", "An approver rejected the request.");
+    }
+    if (Date.parse(approval.createdAt) > now.getTime()) {
+      return invalid(
+        "APPROVAL_CREATED_IN_FUTURE",
+        "An approval creation time cannot be in the future.",
+      );
+    }
+    if (Date.parse(approval.expiresAt) > requestExpiresAt) {
+      return invalid(
+        "APPROVAL_EXPIRY_EXCEEDS_REQUEST",
+        "An approval cannot outlive its approval request.",
+      );
     }
     if (
       Date.parse(approval.expiresAt) <= now.getTime() ||

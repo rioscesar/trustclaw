@@ -25,9 +25,9 @@ export interface AuditVerification {
 }
 
 export interface AuditStore {
-  append(input: AuditEventInput): AuditEvent;
-  list(): readonly AuditEvent[];
-  verify(): AuditVerification;
+  append(input: AuditEventInput): AuditEvent | PromiseLike<AuditEvent>;
+  list(): readonly AuditEvent[] | PromiseLike<readonly AuditEvent[]>;
+  verify(): AuditVerification | PromiseLike<AuditVerification>;
 }
 
 type EventWithoutDigest = Omit<AuditEvent, "digest">;

@@ -5,7 +5,7 @@ import {
 } from "@trustclaw/contracts";
 
 export interface PolicyEngine {
-  evaluate(request: unknown): PolicyDecision;
+  evaluate(request: unknown): PolicyDecision | PromiseLike<PolicyDecision>;
 }
 
 export interface DemoPolicyOptions {

@@ -55,7 +55,7 @@ See [the architecture notes](docs/architecture.md), [audit event schema](docs/au
 The first executable vertical slice:
 
 - Converts a simulated `gmail.delete_email` proposal into a runtime-neutral authorization request.
-- Canonicalizes the request and binds approvals to its SHA-256 digest and expiration.
+- Snapshots the proposed action before any asynchronous adapter call, canonicalizes it, and binds approvals to its SHA-256 digest and expiration.
 - Applies a versioned deterministic policy: year-old email deletion is medium risk; bulk deletion above the configured threshold is critical and requires two distinct approvers.
 - Executes only after sufficient valid approval and never contacts Gmail.
 - Records request, decision, approval, execution, and outcome events in an in-memory SHA-256 hash chain.
@@ -94,6 +94,8 @@ recommendation.
 - ESLint and Prettier
 
 The implementation uses interfaces so PostgreSQL, OpenTelemetry, and an OpenClaw adapter can be added later. They are not dependencies of this milestone.
+Policy, approval, tool, and audit adapters may be synchronous or asynchronous;
+the gateway awaits either form.
 
 ## Status
 

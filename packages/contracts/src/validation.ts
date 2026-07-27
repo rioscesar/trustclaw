@@ -7,6 +7,7 @@ import {
   AuthorizationRequestSchema,
   ExecutionOutcomeSchema,
   PolicyDecisionSchema,
+  RFC3339_TIMESTAMP_PATTERN,
   type ApprovalRequest,
   type ApprovalRecord,
   type AuditEvent,
@@ -17,7 +18,10 @@ import {
 import { sha256Digest } from "./canonical.js";
 
 export function isValidTimestamp(value: string): boolean {
-  return Number.isFinite(Date.parse(value));
+  return (
+    new RegExp(RFC3339_TIMESTAMP_PATTERN).test(value) &&
+    Number.isFinite(Date.parse(value))
+  );
 }
 
 export function isAuthorizationRequest(

@@ -3,6 +3,7 @@ import { validateApprovals } from "@trustclaw/gateway";
 import { describe, expect, it } from "vitest";
 
 const now = new Date("2026-07-26T18:00:00.000Z");
+const requestExpiresAt = "2026-07-26T18:05:00.000Z";
 
 function approval(overrides: Partial<ApprovalRecord> = {}): ApprovalRecord {
   return {
@@ -24,13 +25,20 @@ describe("approval enforcement", () => {
         approval().requestDigest,
         1,
         now,
+        requestExpiresAt,
       ),
     ).toMatchObject({ valid: false, reasonCode: "APPROVAL_EXPIRED" });
   });
 
   it("rejects approvals bound to another request", () => {
     expect(
-      validateApprovals([approval()], `sha256:${"b".repeat(64)}`, 1, now),
+      validateApprovals(
+        [approval()],
+        `sha256:${"b".repeat(64)}`,
+        1,
+        now,
+        requestExpiresAt,
+      ),
     ).toMatchObject({ valid: false, reasonCode: "APPROVAL_DIGEST_MISMATCH" });
   });
 
@@ -41,6 +49,7 @@ describe("approval enforcement", () => {
         approval().requestDigest,
         2,
         now,
+        requestExpiresAt,
       ),
     ).toMatchObject({ valid: false, reasonCode: "DUPLICATE_APPROVER" });
 
@@ -53,13 +62,20 @@ describe("approval enforcement", () => {
         approval().requestDigest,
         2,
         now,
+        requestExpiresAt,
       ),
     ).toEqual({ valid: true });
   });
 
   it("rejects execution authorization with too few approvals", () => {
     expect(
-      validateApprovals([approval()], approval().requestDigest, 2, now),
+      validateApprovals(
+        [approval()],
+        approval().requestDigest,
+        2,
+        now,
+        requestExpiresAt,
+      ),
     ).toMatchObject({ valid: false, reasonCode: "INSUFFICIENT_APPROVALS" });
   });
 
@@ -70,7 +86,68 @@ describe("approval enforcement", () => {
         approval().requestDigest,
         1,
         now,
+        requestExpiresAt,
       ),
     ).toMatchObject({ valid: false, reasonCode: "MALFORMED_APPROVAL" });
+  });
+
+  it("rejects approval records that outlive the approval request", () => {
+    expect(
+      validateApprovals(
+        [approval({ expiresAt: "2026-07-26T18:10:00.000Z" })],
+        approval().requestDigest,
+        1,
+        now,
+        "2026-07-26T18:05:00.000Z",
+      ),
+    ).toMatchObject({
+      valid: false,
+      reasonCode: "APPROVAL_EXPIRY_EXCEEDS_REQUEST",
+    });
+  });
+
+  it("rejects approval after the approval request expires", () => {
+    expect(
+      validateApprovals(
+        [approval()],
+        approval().requestDigest,
+        1,
+        now,
+        "2026-07-26T17:59:59.000Z",
+      ),
+    ).toMatchObject({
+      valid: false,
+      reasonCode: "APPROVAL_REQUEST_EXPIRED",
+    });
+  });
+
+  it("rejects approval records created in the future", () => {
+    expect(
+      validateApprovals(
+        [approval({ createdAt: "2026-07-26T18:00:01.000Z" })],
+        approval().requestDigest,
+        1,
+        now,
+        requestExpiresAt,
+      ),
+    ).toMatchObject({
+      valid: false,
+      reasonCode: "APPROVAL_CREATED_IN_FUTURE",
+    });
+  });
+
+  it("rejects a malformed approval-request deadline", () => {
+    expect(
+      validateApprovals(
+        [approval()],
+        approval().requestDigest,
+        1,
+        now,
+        "07/26/2026 18:05:00 UTC",
+      ),
+    ).toMatchObject({
+      valid: false,
+      reasonCode: "MALFORMED_APPROVAL_REQUEST",
+    });
   });
 });

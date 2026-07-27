@@ -1,4 +1,7 @@
 import {
+  canonicalize,
+  isApprovalRecord,
+  isAuthorizationRequest,
   isExecutionOutcome,
   isPolicyDecision,
   type ApprovalRecord,
@@ -6,6 +9,7 @@ import {
   type AuthorizationRequest,
   type ExecutionOutcome,
   type JsonObject,
+  type JsonValue,
   type PolicyDecision,
 } from "@trustclaw/contracts";
 import type { PolicyEngine } from "@trustclaw/policy-engine";
@@ -13,8 +17,14 @@ import type { PolicyEngine } from "@trustclaw/policy-engine";
 import type { AuditStore } from "./audit.js";
 import { validateApprovals } from "./approvals.js";
 
+function snapshotJson<T>(value: T): T {
+  return JSON.parse(canonicalize(value as unknown as JsonValue)) as T;
+}
+
 export interface ApprovalProvider {
-  requestApproval(request: ApprovalRequest): Promise<readonly ApprovalRecord[]>;
+  requestApproval(
+    request: ApprovalRequest,
+  ): readonly ApprovalRecord[] | PromiseLike<readonly ApprovalRecord[]>;
 }
 
 export interface ToolHandler {
@@ -22,7 +32,7 @@ export interface ToolHandler {
     action: string,
     rawArguments: JsonObject,
     requestId: string,
-  ): Promise<ExecutionOutcome>;
+  ): ExecutionOutcome | PromiseLike<ExecutionOutcome>;
 }
 
 export interface GatewayResult {
@@ -51,21 +61,29 @@ export class TrustClawGateway {
   }
 
   async execute(request: AuthorizationRequest): Promise<GatewayResult> {
-    this.record("request", request.requestId, {
-      agentId: request.agentId,
-      action: request.action,
-      approvalContext: request.approvalContext,
-      requestDigest: request.requestDigest,
+    if (!isAuthorizationRequest(request)) {
+      throw new Error("Authorization request is invalid.");
+    }
+    const governedRequest = snapshotJson(request);
+
+    await this.record("request", governedRequest.requestId, {
+      agentId: governedRequest.agentId,
+      action: governedRequest.action,
+      approvalContext: governedRequest.approvalContext,
+      requestDigest: governedRequest.requestDigest,
     });
 
-    const decision = this.options.policy.evaluate(request);
+    const policyDecision = await this.options.policy.evaluate(
+      snapshotJson(governedRequest),
+    );
     if (
-      !isPolicyDecision(decision) ||
-      decision.requestId !== request.requestId
+      !isPolicyDecision(policyDecision) ||
+      policyDecision.requestId !== governedRequest.requestId
     ) {
       throw new Error("Policy engine returned an invalid decision.");
     }
-    this.record("policy_decision", request.requestId, {
+    const decision = snapshotJson(policyDecision);
+    await this.record("policy_decision", governedRequest.requestId, {
       disposition: decision.disposition,
       policyVersion: decision.policyVersion,
       reasonCode: decision.reasonCode,
@@ -79,24 +97,32 @@ export class TrustClawGateway {
 
     if (decision.requiredApprovals > 0) {
       const now = this.clock();
+      const approvalRequestExpiresAt = new Date(
+        now.getTime() + this.approvalTtlMs,
+      ).toISOString();
       const approvalRequest: ApprovalRequest = {
-        requestId: request.requestId,
-        requestDigest: request.requestDigest,
+        requestId: governedRequest.requestId,
+        requestDigest: governedRequest.requestDigest,
         requiredApprovals: decision.requiredApprovals,
-        context: request.approvalContext,
-        expiresAt: new Date(now.getTime() + this.approvalTtlMs).toISOString(),
+        context: governedRequest.approvalContext,
+        expiresAt: approvalRequestExpiresAt,
       };
-      const approvals =
-        await this.options.approvalProvider.requestApproval(approvalRequest);
+      const approvals = await this.options.approvalProvider.requestApproval(
+        snapshotJson(approvalRequest),
+      );
       const validation = validateApprovals(
         approvals,
-        request.requestDigest,
+        governedRequest.requestDigest,
         decision.requiredApprovals,
         this.clock(),
+        approvalRequestExpiresAt,
       );
+      const validApprovalRecords = approvals
+        .filter(isApprovalRecord)
+        .map((approval) => snapshotJson(approval));
 
-      for (const approval of approvals) {
-        this.record("approval", request.requestId, {
+      for (const approval of validApprovalRecords) {
+        await this.record("approval", governedRequest.requestId, {
           approvalId: approval.approvalId,
           approverId: approval.approverId,
           decision: approval.decision,
@@ -106,6 +132,12 @@ export class TrustClawGateway {
       }
 
       if (!validation.valid) {
+        if (validApprovalRecords.length === 0) {
+          await this.record("approval", governedRequest.requestId, {
+            reasonCode: validation.reasonCode ?? "INVALID_APPROVAL",
+            status: "invalid",
+          });
+        }
         return {
           executed: false,
           decision,
@@ -114,22 +146,23 @@ export class TrustClawGateway {
       }
     }
 
-    this.record("execution", request.requestId, {
-      action: request.action,
+    await this.record("execution", governedRequest.requestId, {
+      action: governedRequest.action,
       status: "started",
     });
-    const outcome = await this.options.toolHandler.execute(
-      request.action,
-      request.rawArguments,
-      request.requestId,
+    const toolOutcome = await this.options.toolHandler.execute(
+      governedRequest.action,
+      governedRequest.rawArguments,
+      governedRequest.requestId,
     );
     if (
-      !isExecutionOutcome(outcome) ||
-      outcome.requestId !== request.requestId
+      !isExecutionOutcome(toolOutcome) ||
+      toolOutcome.requestId !== governedRequest.requestId
     ) {
       throw new Error("Tool handler returned an invalid execution outcome.");
     }
-    this.record("outcome", request.requestId, {
+    const outcome = snapshotJson(toolOutcome);
+    await this.record("outcome", governedRequest.requestId, {
       status: outcome.status,
       summary: outcome.summary,
     });
@@ -137,13 +170,13 @@ export class TrustClawGateway {
     return { executed: true, decision, outcome };
   }
 
-  private record(
+  private async record(
     eventType:
       "request" | "policy_decision" | "approval" | "execution" | "outcome",
     requestId: string,
     metadata: JsonObject,
-  ): void {
-    this.options.audit.append({
+  ): Promise<void> {
+    await this.options.audit.append({
       eventType,
       timestamp: this.clock().toISOString(),
       requestId,

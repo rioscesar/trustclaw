@@ -13,7 +13,9 @@ export const JsonValueSchema = Type.Recursive((Self) =>
 
 const JsonObjectSchema = Type.Record(Type.String(), JsonValueSchema);
 const DigestSchema = Type.String({ pattern: "^sha256:[0-9a-f]{64}$" });
-const TimestampSchema = Type.String({ minLength: 20 });
+export const RFC3339_TIMESTAMP_PATTERN =
+  "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?(?:Z|[+-]\\d{2}:\\d{2})$";
+const TimestampSchema = Type.String({ pattern: RFC3339_TIMESTAMP_PATTERN });
 
 export const AuthorizationRequestSchema = Type.Object(
   {

@@ -8,7 +8,7 @@ export interface AuthorizationRequestInput {
   requestedAt: string;
   rawArguments: JsonObject;
   approvalContext: JsonObject;
-  canonicalContent: JsonObject;
+  parameters: JsonObject;
 }
 
 export function createAuthorizationRequest(
@@ -21,7 +21,7 @@ export function createAuthorizationRequest(
     action: input.action,
     requestedAt: input.requestedAt,
     rawArgumentsDigest: sha256Digest(input.rawArguments),
-    parameters: input.canonicalContent,
+    parameters: input.parameters,
   };
 
   return {

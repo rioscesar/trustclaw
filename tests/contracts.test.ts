@@ -28,7 +28,7 @@ describe("canonical JSON", () => {
       requestedAt: "2026-07-26T18:00:00.000Z",
       rawArguments: { folder: "archive", mailboxAccessHandle: "handle-one" },
       approvalContext: { summary: "delete old email" },
-      canonicalContent: { olderThanDays: 365, emailCount: 2 },
+      parameters: { olderThanDays: 365, emailCount: 2 },
     });
     const second = createAuthorizationRequest({
       requestId: "request-1",
@@ -37,7 +37,7 @@ describe("canonical JSON", () => {
       requestedAt: "2026-07-26T18:00:00.000Z",
       rawArguments: { mailboxAccessHandle: "handle-one", folder: "archive" },
       approvalContext: { summary: "delete old email" },
-      canonicalContent: { emailCount: 2, olderThanDays: 365 },
+      parameters: { emailCount: 2, olderThanDays: 365 },
     });
 
     expect(first.requestDigest).toBe(second.requestDigest);
@@ -51,7 +51,7 @@ describe("canonical JSON", () => {
       action: "gmail.delete_email",
       requestedAt: "2026-07-26T18:00:00.000Z",
       approvalContext: { summary: "delete old email" },
-      canonicalContent: { emailCount: 2, olderThanDays: 365 },
+      parameters: { emailCount: 2, olderThanDays: 365 },
     };
 
     const first = createAuthorizationRequest({
@@ -134,6 +134,15 @@ describe("runtime contract validation", () => {
       isAuditEvent({
         schemaVersion: "1.0",
         timestamp: "not-a-timestamp",
+      }),
+    ).toBe(false);
+    expect(
+      isApprovalRequest({
+        requestId: "request-1",
+        requestDigest: `sha256:${"a".repeat(64)}`,
+        requiredApprovals: 1,
+        context: {},
+        expiresAt: "07/26/2026 18:05:00 UTC",
       }),
     ).toBe(false);
   });

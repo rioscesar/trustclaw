@@ -89,12 +89,9 @@ export async function runScenario(nonInteractive = true): Promise<{
     approvalContext: {
       summary: "simulated deletion of 3 emails older than one year",
     },
-    canonicalContent: {
-      action: "gmail.delete_email",
-      agentId: "openclaw-demo-agent",
+    parameters: {
       emailCount: 3,
       olderThanDays: 365,
-      requestId: "stable-demo-request",
     },
   });
   const gateway = new TrustClawGateway({
