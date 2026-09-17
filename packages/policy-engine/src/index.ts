@@ -4,9 +4,10 @@ import {
   type PolicyDecision,
 } from "@trustclaw/contracts";
 
-export interface PolicyEngine {
-  evaluate(request: unknown): PolicyDecision | PromiseLike<PolicyDecision>;
-}
+import type { PolicyEngine } from "./policy-engine.js";
+
+export type { PolicyEngine } from "./policy-engine.js";
+export * from "./email-policy.js";
 
 export interface DemoPolicyOptions {
   version?: string;

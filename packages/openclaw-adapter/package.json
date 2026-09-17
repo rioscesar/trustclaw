@@ -1,0 +1,24 @@
+{
+  "name": "@trustclaw/openclaw-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "openclaw": {
+    "extensions": ["./dist/index.js"]
+  },
+  "dependencies": {
+    "@trustclaw/cli": "workspace:*",
+    "@trustclaw/contracts": "workspace:*",
+    "@trustclaw/email-adapter": "workspace:*",
+    "@trustclaw/email-integration": "workspace:*",
+    "@trustclaw/gateway": "workspace:*",
+    "@trustclaw/policy-engine": "workspace:*",
+    "typebox": "^1.3.30"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.5.17"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

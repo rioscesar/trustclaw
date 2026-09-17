@@ -1,0 +1,22 @@
+{
+  "id": "trustclaw-email",
+  "name": "TrustClaw Governed Email",
+  "description": "Routes send_email through the TrustClaw authorization gateway: policy, human approval, and tamper-evident audit are unavoidable before any message leaves the mailbox.",
+  "categories": ["other"],
+  "contracts": {
+    "tools": ["send_email"]
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "agentId": { "type": "string" },
+      "allowedLowRiskRecipients": { "type": "array", "items": { "type": "string" } },
+      "deniedRecipients": { "type": "array", "items": { "type": "string" } },
+      "deniedDomains": { "type": "array", "items": { "type": "string" } }
+    }
+  }
+}

@@ -9,6 +9,9 @@
   "references": [
     { "path": "../packages/contracts" },
     { "path": "../packages/policy-engine" },
-    { "path": "../packages/gateway" }
+    { "path": "../packages/gateway" },
+    { "path": "../packages/email-adapter" },
+    { "path": "../packages/email-integration" },
+    { "path": "../packages/cli" }
   ]
 }

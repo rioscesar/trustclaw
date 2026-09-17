@@ -1,5 +1,5 @@
 {
-  "name": "@trustclaw/cli",
+  "name": "@trustclaw/email-adapter",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,9 +11,10 @@
   },
   "dependencies": {
     "@trustclaw/contracts": "workspace:*",
-    "@trustclaw/email-adapter": "workspace:*",
-    "@trustclaw/email-integration": "workspace:*",
     "@trustclaw/gateway": "workspace:*",
-    "@trustclaw/policy-engine": "workspace:*"
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17"
   }
 }
