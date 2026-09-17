@@ -92,6 +92,7 @@ need. Never commit `.env` or put real values in any tracked file.
 | `TRUSTCLAW_SMTP_USER` | SMTP auth username for the disposable demo mailbox. |
 | `TRUSTCLAW_SMTP_PASS` | SMTP auth password/app-password. Never printed or audited. |
 | `TRUSTCLAW_SMTP_FROM` | From address for outgoing demo mail. |
+| `TRUSTCLAW_DEMO_RECIPIENT` | Recipient used by the CLI approval scenario in real mode. Use only an address you control or have permission to email. |
 
 If `TRUSTCLAW_EMAIL_MODE=real` and any required SMTP variable is missing or
 invalid, the adapter **fails closed**: it throws before any tool executes
@@ -127,16 +128,15 @@ corepack pnpm test
 
 ## 6. Real-email smoke test
 
-1. Set in `.env`: `TRUSTCLAW_EMAIL_MODE=real` plus all `TRUSTCLAW_SMTP_*`
-   variables for your disposable demo mailbox.
-2. Load the env vars into your shell, then run the interactive approve
-   scenario against the real adapter path by driving it through the
-   OpenClaw plugin (§2) rather than the CLI scenario runner — the CLI
-   scenarios (`demo:email:*`) always use the simulated adapter by design,
-   so they stay dependency-free. To validate the SMTP path directly before
-   the full OpenClaw run, send yourself (or another address you control) a
-   one-off test message through your OpenClaw demo agent's `send_email`
-   tool and confirm it arrives.
+1. Set in `.env`: `TRUSTCLAW_EMAIL_MODE=real`, all
+   `TRUSTCLAW_SMTP_*` variables for your disposable demo mailbox, and
+   `TRUSTCLAW_DEMO_RECIPIENT` to an address you control or have explicit
+   permission to email.
+2. Run `corepack pnpm demo:email:approve`. The CLI loads `.env`
+   automatically. Real mode always forces the terminal y/N prompt; it
+   never uses the simulated scenario's automatic approval. Review the
+   exact recipient, subject, body, and request digest before entering `y`.
+   Entering anything else denies the action without contacting SMTP.
 3. Confirm no credentials or plaintext body ever print to the terminal or
    appear in audit output — only the interception box (recipient/subject/
    body, shown to the human approver only) and the evidence summary are

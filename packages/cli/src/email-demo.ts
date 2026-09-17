@@ -1,5 +1,12 @@
+import { existsSync } from "node:fs";
+import { loadEnvFile } from "node:process";
+
 import { runEmailScenario, findApprover, type ScenarioName } from "./email-scenarios.js";
 import { formatAuthorizedEvidence, formatDeniedEvidence } from "./evidence.js";
+
+if (existsSync(".env")) {
+  loadEnvFile(".env");
+}
 
 const scenarioArg = process.argv.find((value) => value.startsWith("--scenario="));
 const requested = scenarioArg?.split("=")[1] ?? "approve";

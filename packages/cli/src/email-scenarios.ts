@@ -1,6 +1,6 @@
 import { InMemoryAuditStore } from "@trustclaw/gateway";
 import { EmailPolicyEngine } from "@trustclaw/policy-engine";
-import { SimulatedEmailHandler } from "@trustclaw/email-adapter";
+import { createEmailHandler, resolveEmailMode } from "@trustclaw/email-adapter";
 import {
   executeGovernedSendEmail,
   type GovernedSendEmailResult,
@@ -62,15 +62,23 @@ export async function runEmailScenario(
   options: RunEmailScenarioOptions = {},
 ): Promise<ScenarioOutcome> {
   const audit = new InMemoryAuditStore();
-  const toolHandler = new SimulatedEmailHandler();
-  const args = SCENARIO_ARGS[name];
+  const mode = resolveEmailMode(process.env);
+  const toolHandler = createEmailHandler(mode, process.env);
+  const interactiveApproval = options.interactive || mode === "real";
+  const args =
+    mode === "real" && name === "approve"
+      ? {
+          ...SCENARIO_ARGS[name],
+          to: requireRealDemoRecipient(process.env),
+        }
+      : SCENARIO_ARGS[name];
 
   const result = await executeGovernedSendEmail(args, {
     policy: buildPolicy(),
     audit,
     toolHandler,
     agentId: DEMO_AGENT_ID,
-    ...(options.interactive ? {} : { clock: () => FIXED_NOW }),
+    ...(interactiveApproval ? {} : { clock: () => FIXED_NOW }),
     createApprovalProvider: (emailArgs) =>
       createEmailTerminalApprovalProvider(
         {
@@ -82,14 +90,26 @@ export async function runEmailScenario(
         },
         {
           risk: "high",
-          nonInteractive: !options.interactive,
+          nonInteractive: !interactiveApproval,
           autoApprove: name === "approve",
-          ...(options.interactive ? {} : { clock: () => FIXED_NOW }),
+          ...(interactiveApproval ? {} : { clock: () => FIXED_NOW }),
         },
       ),
   });
 
   return { name, args, result, audit };
+}
+
+function requireRealDemoRecipient(
+  env: Readonly<Record<string, string | undefined>>,
+): string {
+  const recipient = env.TRUSTCLAW_DEMO_RECIPIENT?.trim();
+  if (!recipient) {
+    throw new Error(
+      "TrustClaw real email demo requires TRUSTCLAW_DEMO_RECIPIENT to be set. Refusing to send real email (fail closed).",
+    );
+  }
+  return recipient;
 }
 
 /** Finds the first accepted approver recorded in the audit trail, if any. */
