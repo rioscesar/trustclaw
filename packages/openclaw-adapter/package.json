@@ -18,6 +18,9 @@
   "peerDependencies": {
     "openclaw": ">=2026.5.17"
   },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json"
   }

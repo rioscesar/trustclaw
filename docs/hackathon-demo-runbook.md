@@ -31,11 +31,11 @@ are unmodified. Everything OpenClaw-specific lives in
 
 ## 2. OpenClaw setup
 
-1. Install/point OpenClaw at this repository's `packages/openclaw-adapter`
-   as a tool plugin (per OpenClaw's plugin-loading conventions — the
-   manifest is `packages/openclaw-adapter/openclaw.plugin.json`, the entry
-   point is `packages/openclaw-adapter/src/index.ts`, built via its own
-   `tsconfig.json`).
+1. Install the bundled artifact for this repository's
+   `packages/openclaw-adapter` as a tool plugin. The manifest is
+   `packages/openclaw-adapter/openclaw.plugin.json`; OpenClaw loads the
+   bundled `dist/index.js` from its extension directory, not the TypeScript
+   source directly. See §3 for the build/install steps.
 2. In the OpenClaw agent profile used for the demo, configure the plugin
    with (values shown are the demo defaults; override recipients to match
    whatever you actually control):
@@ -58,6 +58,34 @@ are unmodified. Everything OpenClaw-specific lives in
 4. Do not add any other email-capable tool to the demo agent. The governed
    `send_email` tool must be the only path to sending mail.
 
+### Frozen demo-agent configuration
+
+The current demo host uses these intentional, non-secret settings. Preserve
+them when recovering the demo; do not paste or commit the full
+`~/.openclaw/openclaw.json`, because it may contain credentials or OAuth
+material.
+
+```text
+agent name                 trustclaw-demo
+model                      openai/gpt-5.6-sol
+agent runtime              openclaw
+tools.profile              full
+tools.allow                ["send_email"]
+skills                     []
+plugins.slots.memory       none
+trustclaw-email.agentId    openclaw-demo
+trustclaw-email.deniedDomains
+                           ["example.com"]
+trustclaw-email.allowedLowRiskRecipients
+                           []
+```
+
+`tools.profile: full` lets the plugin survive the baseline tool filter;
+`tools.allow` then reduces the model-visible surface to exactly
+`send_email`. Do not change the profile without retaining the explicit
+allowlist. `plugins.slots.memory: none` is demo-only and suppresses unrelated
+memory-embedding errors.
+
 ## 3. TrustClaw plugin setup
 
 From the repo root:
@@ -75,8 +103,39 @@ only package that imports the real `openclaw` SDK); build it on its own
 when you want to validate it standalone:
 
 ```powershell
-corepack pnpm --filter @trustclaw/openclaw-adapter exec tsc -p tsconfig.json --noEmit
+corepack pnpm --filter @trustclaw/openclaw-adapter exec tsc -p tsconfig.json
 ```
+
+### Bundle and install the OpenClaw plugin
+
+The Gateway executes the installed bundle under
+`~/.openclaw/extensions/trustclaw-email/dist/index.js`. After any
+`packages/openclaw-adapter` or related runtime-package change, rebuild and
+replace that artifact before restarting the Gateway.
+
+The bundle must preserve Node's CommonJS loader for Nodemailer. This is
+essential: an ESM bundle without the `createRequire` banner fails at startup
+with `Dynamic require of "events" is not supported`.
+
+From a WSL/bash shell with the repository dependencies installed:
+
+```bash
+cd <trustclaw-repository>
+pnpm --filter @trustclaw/openclaw-adapter exec tsc -p tsconfig.json
+pnpm --filter @trustclaw/openclaw-adapter exec esbuild \
+  packages/openclaw-adapter/dist/index.js \
+  --bundle --platform=node --format=esm --target=node22 --external:openclaw \
+  --banner:js='import{createRequire as __tcCR}from"node:module";const require=__tcCR(import.meta.url);' \
+  --outfile=/tmp/trustclaw-email/index.js
+node --input-type=module -e 'await import("/tmp/trustclaw-email/index.js"); console.log("plugin bundle loads")'
+install -d ~/.openclaw/extensions/trustclaw-email/dist
+install -m 600 /tmp/trustclaw-email/index.js ~/.openclaw/extensions/trustclaw-email/dist/index.js
+```
+
+Keep the existing `openclaw.plugin.json` and minimal installed
+`package.json` in the extension directory; the bundle command replaces only
+the executable artifact. Restart the Gateway after replacing it. Do not put
+credentials in that directory.
 
 ## 4. Environment variables
 
@@ -144,22 +203,27 @@ corepack pnpm test
 
 ## 7. Exact demo sequence
 
-1. **Low-risk / allow.** Prompt OpenClaw: *"Send a quick status ping to
-   `<allowlisted demo recipient>` saying everything is quiet."* OpenClaw
-   calls `send_email`; TrustClaw executes immediately, no approval. Show
-   the `AUTHORIZED / EXECUTED` evidence.
-2. **Consequential / approval required.** Prompt OpenClaw: *"Send
+1. **Consequential / approval required.** Prompt OpenClaw: *"Send
    `<approval-required demo recipient>` an email saying the production
    deployment starts at 8 PM."* TrustClaw intercepts with the boxed UI,
    shows the exact recipient/subject/body and the request digest. Approve
    with `y`. Show that the email actually sends (simulated or real) and the
    `AUTHORIZED / EXECUTED` evidence, including the same request digest.
-3. **Forbidden / deny.** Prompt OpenClaw: *"Send `customer@<forbidden
+2. **Forbidden / deny.** Prompt OpenClaw: *"Send `customer@<forbidden
    domain>` an email about tonight's deployment."* TrustClaw denies before
-   any adapter call. Show the `DENIED` evidence — no message sent.
-4. **Tamper demonstration.** Run `corepack pnpm demo:tamper` to show a
+   any adapter call. The OpenClaw tool result contains the denial reason and
+   request digest; no approval prompt or SMTP execution occurs. To show the
+   formatted `DENIED` block in the terminal, run
+   `corepack pnpm demo:email:deny` separately.
+3. **Tamper demonstration.** Run `corepack pnpm demo:tamper` to show a
    valid audit history verifying, then a tampered copy of the same history
    failing verification.
+
+The frozen hackathon configuration has
+`allowedLowRiskRecipients: []`, so it deliberately demonstrates approval and
+denial only. To show a low-risk allow scenario, configure a separate
+recipient you control as allowlisted and remember that real mode sends a real
+email to it. Do not use the approval-required recipient for both scenarios.
 
 ## 8. Expected outputs
 
@@ -206,7 +270,7 @@ sha256:<hex>
 `Approver: demo-operator` (or the real approver id) and the identical
 request digest.
 
-Deny:
+Deny (standalone CLI scenario runner):
 
 ```
 DENIED
@@ -253,3 +317,55 @@ live demo:
    (`simulated` for the safe path, `real` only if you've rehearsed it).
 3. Re-run `corepack pnpm test` once before going on stage to confirm the
    boundary is intact end-to-end.
+
+## 11. Foreground Gateway startup and post-shutdown recovery
+
+The terminal approval provider reads the Gateway process's stdin. Run the
+Gateway in a foreground terminal for this demo; a systemd-managed Gateway has
+no interactive stdin and cannot receive the `y/N` approval decision.
+
+The foreground Gateway must be the only process on port `18789`. Disable the
+user unit before demoing so it cannot reclaim the port after a reboot:
+
+```bash
+systemctl --user disable --now openclaw-gateway
+```
+
+After a shutdown, open a standalone WSL terminal:
+
+```powershell
+wsl -d OpenClawGateway
+```
+
+Then run the following in its bash shell. The `tr -d '\r'` is required while
+the local `.env` uses CRLF: without it, `TRUSTCLAW_EMAIL_MODE=real` becomes
+`real\r` and safely—but misleadingly—selects simulated mode.
+
+```bash
+mountpoint -q /mnt/d || sudo mount -t drvfs D: /mnt/d -o metadata
+cd <trustclaw-repository>
+set -a
+. <(tr -d '\r' < .env)
+set +a
+cd ~
+echo "MODE=[$TRUSTCLAW_EMAIL_MODE]"
+openclaw gateway --port 18789
+```
+
+Confirm all of the following before a real-email demonstration:
+
+- `MODE=[real]`
+- `14 plugins` with `trustclaw-email` listed
+- Gateway `ready`
+- no `trustclaw-email failed to load` error
+
+Drive the demo agent from a second terminal:
+
+```bash
+openclaw agent --agent trustclaw-demo --session-key demo-$(date +%s) --message "<ordinary email request>"
+```
+
+Do not press Enter in the Gateway terminal before the approval prompt: a
+buffered newline is treated as an empty answer and rejects the request. Always
+answer or reject a pending approval before stopping the Gateway; otherwise its
+readline handle can delay shutdown.

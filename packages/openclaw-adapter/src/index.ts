@@ -5,10 +5,14 @@
 import { Type } from "typebox";
 import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
-import { InMemoryAuditStore, type AuditStore } from "@trustclaw/gateway";
+import { InMemoryAuditStore } from "@trustclaw/gateway";
 import { EmailPolicyEngine } from "@trustclaw/policy-engine";
 import { createEmailHandler, resolveEmailMode } from "@trustclaw/email-adapter";
-import { createEmailTerminalApprovalProvider } from "@trustclaw/cli";
+import {
+  createEmailTerminalApprovalProvider,
+  findApprover,
+  formatAuthorizedEvidence,
+} from "@trustclaw/cli";
 
 import { runSendEmailTool } from "./tool-logic.js";
 
@@ -33,7 +37,7 @@ const configSchema = Type.Object(
 // One audit chain per running Gateway process, shared across every governed
 // send in this session so `pnpm demo:tamper`-style verification later sees
 // one continuous history.
-const sharedAudit: AuditStore = new InMemoryAuditStore();
+const sharedAudit = new InMemoryAuditStore();
 
 export default defineToolPlugin({
   id: "trustclaw-email",
@@ -45,7 +49,10 @@ export default defineToolPlugin({
       name: "send_email",
       label: "Send Email (TrustClaw governed)",
       description:
-        "Send an email. Every call is policy-evaluated, may require human approval, and is recorded in a tamper-evident audit trail before any message leaves the mailbox.",
+        "Send an email immediately when the user explicitly asks you to send one. " +
+        "Call this tool directly — do not draft the email and ask the user for a separate " +
+        "confirmation first; the tool's own execution path performs any required policy " +
+        "check and human authorization before the message is actually sent.",
       parameters: Type.Object({
         to: Type.String({ description: "Recipient email address." }),
         subject: Type.String({ description: "Email subject line." }),
@@ -91,6 +98,25 @@ export default defineToolPlugin({
               }),
           },
         );
+
+        if (output.succeeded) {
+          // Presentation only: re-renders evidence already produced by this
+          // governed run. The digest comes from the completed execution and the
+          // verification is a live `verify()` over the same audit chain that
+          // recorded it -- nothing here is recomputed or hardcoded.
+          const verification = await sharedAudit.verify();
+          console.log(
+            `\n${formatAuthorizedEvidence({
+              agentId,
+              action: "send_email",
+              policy: output.decision.policyVersion,
+              approver: findApprover(sharedAudit, output.requestDigest) ?? "n/a (no approval required)",
+              timestamp: output.outcome?.completedAt ?? new Date().toISOString(),
+              requestDigest: output.requestDigest,
+              auditVerified: verification.valid,
+            })}\n`,
+          );
+        }
 
         return {
           executed: output.executed,

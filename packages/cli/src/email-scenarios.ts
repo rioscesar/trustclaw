@@ -112,10 +112,21 @@ function requireRealDemoRecipient(
   return recipient;
 }
 
-/** Finds the first accepted approver recorded in the audit trail, if any. */
-export function findApprover(audit: InMemoryAuditStore): string | undefined {
+/**
+ * Finds the first accepted approver recorded in the audit trail, if any.
+ * When `requestDigest` is supplied, only approvals bound to that exact digest
+ * are considered, so a long-lived audit chain shared across several governed
+ * runs still reports the approver of the run being rendered.
+ */
+export function findApprover(
+  audit: InMemoryAuditStore,
+  requestDigest?: string,
+): string | undefined {
   for (const event of audit.list()) {
     if (event.eventType === "approval" && event.metadata.decision === "approve") {
+      if (requestDigest !== undefined && event.metadata.requestDigest !== requestDigest) {
+        continue;
+      }
       const approverId = event.metadata.approverId;
       if (typeof approverId === "string") {
         return approverId;
