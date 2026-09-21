@@ -34,7 +34,8 @@ export class SimulatedEmailHandler implements ToolHandler {
       requestId,
       status: "succeeded",
       completedAt: new Date().toISOString(),
-      summary: "Simulated email dispatch completed; no mail server was contacted.",
+      summary:
+        "Simulated email dispatch completed; no mail server was contacted.",
     };
   }
 }

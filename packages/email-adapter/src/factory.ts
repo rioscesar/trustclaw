@@ -48,7 +48,10 @@ export function createEmailHandler(
     const secure = env.TRUSTCLAW_SMTP_SECURE === "true" || port === 465;
 
     return createTransportFn
-      ? new SmtpEmailHandler({ host, port, secure, user, pass, from }, createTransportFn)
+      ? new SmtpEmailHandler(
+          { host, port, secure, user, pass, from },
+          createTransportFn,
+        )
       : new SmtpEmailHandler({ host, port, secure, user, pass, from });
   }
 

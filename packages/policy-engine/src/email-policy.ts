@@ -44,7 +44,9 @@ export class EmailPolicyEngine implements PolicyEngine {
       (options.deniedRecipients ?? []).map(normalizeRecipient),
     );
     this.deniedDomains = new Set(
-      (options.deniedDomains ?? []).map((domain) => domain.trim().toLowerCase()),
+      (options.deniedDomains ?? []).map((domain) =>
+        domain.trim().toLowerCase(),
+      ),
     );
   }
 
@@ -78,7 +80,10 @@ export class EmailPolicyEngine implements PolicyEngine {
     const normalized = normalizeRecipient(to);
     const domain = normalized.slice(normalized.lastIndexOf("@") + 1);
 
-    if (this.deniedRecipients.has(normalized) || this.deniedDomains.has(domain)) {
+    if (
+      this.deniedRecipients.has(normalized) ||
+      this.deniedDomains.has(domain)
+    ) {
       return this.deny(
         request.requestId,
         "FORBIDDEN_RECIPIENT",

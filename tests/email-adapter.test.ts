@@ -1,5 +1,9 @@
 import { SimulatedEmailHandler } from "@trustclaw/email-adapter";
-import { createEmailHandler, resolveEmailMode, SmtpEmailHandler } from "@trustclaw/email-adapter";
+import {
+  createEmailHandler,
+  resolveEmailMode,
+  SmtpEmailHandler,
+} from "@trustclaw/email-adapter";
 import { describe, expect, it } from "vitest";
 
 describe("simulated email handler", () => {
@@ -31,7 +35,9 @@ describe("resolveEmailMode", () => {
 
   it("only switches to real on an explicit opt-in", () => {
     expect(resolveEmailMode({ TRUSTCLAW_EMAIL_MODE: "real" })).toBe("real");
-    expect(resolveEmailMode({ TRUSTCLAW_EMAIL_MODE: "REAL" })).toBe("simulated");
+    expect(resolveEmailMode({ TRUSTCLAW_EMAIL_MODE: "REAL" })).toBe(
+      "simulated",
+    );
   });
 });
 
@@ -78,7 +84,9 @@ describe("createEmailHandler", () => {
   });
 
   it("rejects an unknown mode", () => {
-    expect(() => createEmailHandler("bogus" as never, {})).toThrow(/Unknown TrustClaw email mode/);
+    expect(() => createEmailHandler("bogus" as never, {})).toThrow(
+      /Unknown TrustClaw email mode/,
+    );
   });
 });
 

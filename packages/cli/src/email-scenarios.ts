@@ -123,8 +123,14 @@ export function findApprover(
   requestDigest?: string,
 ): string | undefined {
   for (const event of audit.list()) {
-    if (event.eventType === "approval" && event.metadata.decision === "approve") {
-      if (requestDigest !== undefined && event.metadata.requestDigest !== requestDigest) {
+    if (
+      event.eventType === "approval" &&
+      event.metadata.decision === "approve"
+    ) {
+      if (
+        requestDigest !== undefined &&
+        event.metadata.requestDigest !== requestDigest
+      ) {
         continue;
       }
       const approverId = event.metadata.approverId;

@@ -1,8 +1,19 @@
-import type { ExecutionOutcome, PolicyDecision, Risk } from "@trustclaw/contracts";
-import type { ApprovalProvider, AuditStore, ToolHandler } from "@trustclaw/gateway";
+import type {
+  ExecutionOutcome,
+  PolicyDecision,
+  Risk,
+} from "@trustclaw/contracts";
+import type {
+  ApprovalProvider,
+  AuditStore,
+  ToolHandler,
+} from "@trustclaw/gateway";
 import type { PolicyEngine } from "@trustclaw/policy-engine";
 
-import { executeGovernedSendEmail, type SendEmailArgs } from "@trustclaw/email-integration";
+import {
+  executeGovernedSendEmail,
+  type SendEmailArgs,
+} from "@trustclaw/email-integration";
 
 export type { SendEmailArgs };
 
@@ -44,7 +55,9 @@ export async function runSendEmailTool(
     agentId: deps.agentId,
     createApprovalProvider: deps.createApprovalProvider,
     ...(deps.clock ? { clock: deps.clock } : {}),
-    ...(deps.approvalTtlMs === undefined ? {} : { approvalTtlMs: deps.approvalTtlMs }),
+    ...(deps.approvalTtlMs === undefined
+      ? {}
+      : { approvalTtlMs: deps.approvalTtlMs }),
   });
 
   const summary = result.succeeded
@@ -58,7 +71,9 @@ export async function runSendEmailTool(
     requestDigest: result.requestDigest,
     decision: result.decision,
     ...(result.outcome ? { outcome: result.outcome } : {}),
-    ...(result.denialReason === undefined ? {} : { denialReason: result.denialReason }),
+    ...(result.denialReason === undefined
+      ? {}
+      : { denialReason: result.denialReason }),
     summary,
   };
 }

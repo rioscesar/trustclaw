@@ -2,9 +2,7 @@
   "id": "trustclaw-email",
   "name": "TrustClaw Governed Email",
   "description": "Sends email through the TrustClaw authorization gateway: policy, approval, and audit are unavoidable.",
-  "categories": [
-    "other"
-  ],
+  "categories": ["other"],
   "activation": {
     "onStartup": true
   },
@@ -41,8 +39,6 @@
   },
   "version": "0.1.0",
   "contracts": {
-    "tools": [
-      "send_email"
-    ]
+    "tools": ["send_email"]
   }
 }

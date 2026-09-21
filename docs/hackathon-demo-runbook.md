@@ -142,15 +142,15 @@ credentials in that directory.
 Copy `.env.example` to `.env` (already gitignored) and fill in only what you
 need. Never commit `.env` or put real values in any tracked file.
 
-| Variable | Purpose |
-|---|---|
-| `TRUSTCLAW_EMAIL_MODE` | `simulated` (default, no network) or `real` (sends via SMTP). |
-| `TRUSTCLAW_SMTP_HOST` | SMTP host. Required only when mode is `real`. |
-| `TRUSTCLAW_SMTP_PORT` | SMTP port (`587` typical for STARTTLS). |
-| `TRUSTCLAW_SMTP_SECURE` | `true` for implicit TLS (port 465), else `false`. |
-| `TRUSTCLAW_SMTP_USER` | SMTP auth username for the disposable demo mailbox. |
-| `TRUSTCLAW_SMTP_PASS` | SMTP auth password/app-password. Never printed or audited. |
-| `TRUSTCLAW_SMTP_FROM` | From address for outgoing demo mail. |
+| Variable                   | Purpose                                                                                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `TRUSTCLAW_EMAIL_MODE`     | `simulated` (default, no network) or `real` (sends via SMTP).                                                          |
+| `TRUSTCLAW_SMTP_HOST`      | SMTP host. Required only when mode is `real`.                                                                          |
+| `TRUSTCLAW_SMTP_PORT`      | SMTP port (`587` typical for STARTTLS).                                                                                |
+| `TRUSTCLAW_SMTP_SECURE`    | `true` for implicit TLS (port 465), else `false`.                                                                      |
+| `TRUSTCLAW_SMTP_USER`      | SMTP auth username for the disposable demo mailbox.                                                                    |
+| `TRUSTCLAW_SMTP_PASS`      | SMTP auth password/app-password. Never printed or audited.                                                             |
+| `TRUSTCLAW_SMTP_FROM`      | From address for outgoing demo mail.                                                                                   |
 | `TRUSTCLAW_DEMO_RECIPIENT` | Recipient used by the CLI approval scenario in real mode. Use only an address you control or have permission to email. |
 
 If `TRUSTCLAW_EMAIL_MODE=real` and any required SMTP variable is missing or
@@ -203,14 +203,14 @@ corepack pnpm test
 
 ## 7. Exact demo sequence
 
-1. **Consequential / approval required.** Prompt OpenClaw: *"Send
+1. **Consequential / approval required.** Prompt OpenClaw: _"Send
    `<approval-required demo recipient>` an email saying the production
-   deployment starts at 8 PM."* TrustClaw intercepts with the boxed UI,
+   deployment starts at 8 PM."_ TrustClaw intercepts with the boxed UI,
    shows the exact recipient/subject/body and the request digest. Approve
    with `y`. Show that the email actually sends (simulated or real) and the
    `AUTHORIZED / EXECUTED` evidence, including the same request digest.
-2. **Forbidden / deny.** Prompt OpenClaw: *"Send `customer@<forbidden
-   domain>` an email about tonight's deployment."* TrustClaw denies before
+2. **Forbidden / deny.** Prompt OpenClaw: _"Send `customer@<forbidden
+domain>` an email about tonight's deployment."_ TrustClaw denies before
    any adapter call. The OpenClaw tool result contains the denial reason and
    request digest; no approval prompt or SMTP execution occurs. To show the
    formatted `DENIED` block in the terminal, run

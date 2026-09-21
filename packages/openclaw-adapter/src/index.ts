@@ -18,17 +18,26 @@ import { runSendEmailTool } from "./tool-logic.js";
 
 const configSchema = Type.Object(
   {
-    agentId: Type.Optional(Type.String({ description: "Identity recorded on every authorization request." })),
+    agentId: Type.Optional(
+      Type.String({
+        description: "Identity recorded on every authorization request.",
+      }),
+    ),
     allowedLowRiskRecipients: Type.Optional(
       Type.Array(Type.String(), {
-        description: "Recipients that may receive email without human approval.",
+        description:
+          "Recipients that may receive email without human approval.",
       }),
     ),
     deniedRecipients: Type.Optional(
-      Type.Array(Type.String(), { description: "Recipient addresses that must never receive email." }),
+      Type.Array(Type.String(), {
+        description: "Recipient addresses that must never receive email.",
+      }),
     ),
     deniedDomains: Type.Optional(
-      Type.Array(Type.String(), { description: "Recipient domains that must never receive email." }),
+      Type.Array(Type.String(), {
+        description: "Recipient domains that must never receive email.",
+      }),
     ),
   },
   { additionalProperties: false },
@@ -42,7 +51,8 @@ const sharedAudit = new InMemoryAuditStore();
 export default defineToolPlugin({
   id: "trustclaw-email",
   name: "TrustClaw Governed Email",
-  description: "Sends email through the TrustClaw authorization gateway: policy, approval, and audit are unavoidable.",
+  description:
+    "Sends email through the TrustClaw authorization gateway: policy, approval, and audit are unavoidable.",
   configSchema,
   tools: (tool) => [
     tool({
@@ -73,13 +83,22 @@ export default defineToolPlugin({
 
         const agentId = config.agentId ?? "openclaw-demo";
         const policy = new EmailPolicyEngine({
-          ...(config.allowedLowRiskRecipients ? { allowedLowRiskRecipients: config.allowedLowRiskRecipients } : {}),
-          ...(config.deniedRecipients ? { deniedRecipients: config.deniedRecipients } : {}),
-          ...(config.deniedDomains ? { deniedDomains: config.deniedDomains } : {}),
+          ...(config.allowedLowRiskRecipients
+            ? { allowedLowRiskRecipients: config.allowedLowRiskRecipients }
+            : {}),
+          ...(config.deniedRecipients
+            ? { deniedRecipients: config.deniedRecipients }
+            : {}),
+          ...(config.deniedDomains
+            ? { deniedDomains: config.deniedDomains }
+            : {}),
         });
         // Fails closed: throws if real mode is selected without complete,
         // valid SMTP configuration. Never silently falls back to simulated.
-        const toolHandler = createEmailHandler(resolveEmailMode(process.env), process.env);
+        const toolHandler = createEmailHandler(
+          resolveEmailMode(process.env),
+          process.env,
+        );
 
         const output = await runSendEmailTool(
           { to, subject, body },
@@ -110,8 +129,11 @@ export default defineToolPlugin({
               agentId,
               action: "send_email",
               policy: output.decision.policyVersion,
-              approver: findApprover(sharedAudit, output.requestDigest) ?? "n/a (no approval required)",
-              timestamp: output.outcome?.completedAt ?? new Date().toISOString(),
+              approver:
+                findApprover(sharedAudit, output.requestDigest) ??
+                "n/a (no approval required)",
+              timestamp:
+                output.outcome?.completedAt ?? new Date().toISOString(),
               requestDigest: output.requestDigest,
               auditVerified: verification.valid,
             })}\n`,

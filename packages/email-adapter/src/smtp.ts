@@ -37,7 +37,9 @@ export class SmtpEmailHandler implements ToolHandler {
 
   constructor(
     config: SmtpEmailConfig,
-    createTransportFn: (config: SmtpEmailConfig) => SmtpTransportLike = defaultTransportFactory,
+    createTransportFn: (
+      config: SmtpEmailConfig,
+    ) => SmtpTransportLike = defaultTransportFactory,
   ) {
     this.transport = createTransportFn(config);
     this.from = config.from;
@@ -56,7 +58,12 @@ export class SmtpEmailHandler implements ToolHandler {
     const body = requireString(rawArguments, "body");
 
     try {
-      await this.transport.sendMail({ from: this.from, to, subject, text: body });
+      await this.transport.sendMail({
+        from: this.from,
+        to,
+        subject,
+        text: body,
+      });
       return {
         requestId,
         status: "succeeded",

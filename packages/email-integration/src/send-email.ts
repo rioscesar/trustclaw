@@ -99,7 +99,9 @@ export async function executeGovernedSendEmail(
     },
     toolHandler: deps.toolHandler,
     ...(deps.clock ? { clock: deps.clock } : {}),
-    ...(deps.approvalTtlMs === undefined ? {} : { approvalTtlMs: deps.approvalTtlMs }),
+    ...(deps.approvalTtlMs === undefined
+      ? {}
+      : { approvalTtlMs: deps.approvalTtlMs }),
   });
 
   const result = await gateway.execute(request);
@@ -112,6 +114,8 @@ export async function executeGovernedSendEmail(
     requestDigest: request.requestDigest,
     decision: result.decision,
     ...(result.outcome ? { outcome: result.outcome } : {}),
-    ...(result.denialReason === undefined ? {} : { denialReason: result.denialReason }),
+    ...(result.denialReason === undefined
+      ? {}
+      : { denialReason: result.denialReason }),
   };
 }

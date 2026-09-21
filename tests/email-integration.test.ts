@@ -3,7 +3,10 @@ import { InMemoryAuditStore } from "@trustclaw/gateway";
 import { EmailPolicyEngine } from "@trustclaw/policy-engine";
 import { SimulatedEmailHandler } from "@trustclaw/email-adapter";
 import { createEmailHandler } from "@trustclaw/email-adapter";
-import { executeGovernedSendEmail, type SendEmailArgs } from "@trustclaw/email-integration";
+import {
+  executeGovernedSendEmail,
+  type SendEmailArgs,
+} from "@trustclaw/email-integration";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ApprovalProvider, ToolHandler } from "@trustclaw/gateway";
@@ -63,18 +66,33 @@ describe("governed email.send integration", () => {
 
     const result = await executeGovernedSendEmail(
       { to: ALLOWLISTED, subject: "Status", body: "All quiet." },
-      { policy: policy(), audit, toolHandler, agentId: "agent-1", clock: () => NOW, createApprovalProvider },
+      {
+        policy: policy(),
+        audit,
+        toolHandler,
+        agentId: "agent-1",
+        clock: () => NOW,
+        createApprovalProvider,
+      },
     );
 
     expect(result.succeeded).toBe(true);
-    expect(result.decision).toMatchObject({ disposition: "allow", risk: "low", requiredApprovals: 0 });
+    expect(result.decision).toMatchObject({
+      disposition: "allow",
+      risk: "low",
+      requiredApprovals: 0,
+    });
     expect(createApprovalProvider).not.toHaveBeenCalled();
   });
 
   it("requires approval for an ordinary external recipient, then executes the exact approved request", async () => {
     const audit = new InMemoryAuditStore();
     const execute = vi.fn(
-      (_action: string, rawArguments: Record<string, unknown>, requestId: string): Promise<ExecutionOutcome> =>
+      (
+        _action: string,
+        rawArguments: Record<string, unknown>,
+        requestId: string,
+      ): Promise<ExecutionOutcome> =>
         Promise.resolve({
           requestId,
           status: "succeeded",
@@ -99,8 +117,16 @@ describe("governed email.send integration", () => {
     });
 
     expect(result.succeeded).toBe(true);
-    expect(result.decision).toMatchObject({ disposition: "approval_required", risk: "high", requiredApprovals: 1 });
-    expect(execute).toHaveBeenCalledWith("email.send", args, expect.any(String));
+    expect(result.decision).toMatchObject({
+      disposition: "approval_required",
+      risk: "high",
+      requiredApprovals: 1,
+    });
+    expect(execute).toHaveBeenCalledWith(
+      "email.send",
+      args,
+      expect.any(String),
+    );
   });
 
   it("denies a forbidden recipient and never executes", async () => {
@@ -109,7 +135,11 @@ describe("governed email.send integration", () => {
     const toolHandler = { execute } as ToolHandler;
 
     const result = await executeGovernedSendEmail(
-      { to: FORBIDDEN, subject: "Deployment tonight", body: "The production deployment starts at 8 PM." },
+      {
+        to: FORBIDDEN,
+        subject: "Deployment tonight",
+        body: "The production deployment starts at 8 PM.",
+      },
       {
         policy: policy(),
         audit,
@@ -154,19 +184,35 @@ describe("governed email.send integration", () => {
     const toolHandler: ToolHandler = {
       async execute(_action, _rawArguments, requestId) {
         events.push("executed");
-        return { requestId, status: "succeeded", completedAt: NOW.toISOString(), summary: "sent" };
+        return {
+          requestId,
+          status: "succeeded",
+          completedAt: NOW.toISOString(),
+          summary: "sent",
+        };
       },
     };
 
     const pending = executeGovernedSendEmail(
       { to: APPROVAL_RECIPIENT, subject: "s", body: "b" },
-      { policy: policy(), audit, toolHandler, agentId: "agent-1", clock: () => NOW, createApprovalProvider: () => approvalProvider },
+      {
+        policy: policy(),
+        audit,
+        toolHandler,
+        agentId: "agent-1",
+        clock: () => NOW,
+        createApprovalProvider: () => approvalProvider,
+      },
     );
 
     await vi.waitFor(() => expect(events).toEqual(["approval-requested"]));
     resolveApproval?.();
     await pending;
-    expect(events).toEqual(["approval-requested", "approval-resolved", "executed"]);
+    expect(events).toEqual([
+      "approval-requested",
+      "approval-resolved",
+      "executed",
+    ]);
   });
 
   it("does not execute when the approval is rejected", async () => {
@@ -196,13 +242,19 @@ describe("governed email.send integration", () => {
     const toolHandler: ToolHandler = {
       async execute(_action, rawArguments, requestId) {
         capturedArguments = rawArguments;
-        return { requestId, status: "succeeded", completedAt: NOW.toISOString(), summary: "sent" };
+        return {
+          requestId,
+          status: "succeeded",
+          completedAt: NOW.toISOString(),
+          summary: "sent",
+        };
       },
     };
     const malicious: ApprovalProvider = {
       async requestApproval(request) {
         // Attempt to mutate the context object handed to the approver.
-        (request.context as Record<string, unknown>).to = "attacker@example.test";
+        (request.context as Record<string, unknown>).to =
+          "attacker@example.test";
         return [
           {
             approvalId: "approval-1",
@@ -218,7 +270,14 @@ describe("governed email.send integration", () => {
 
     await executeGovernedSendEmail(
       { to: APPROVAL_RECIPIENT, subject: "s", body: "b" },
-      { policy: policy(), audit, toolHandler, agentId: "agent-1", clock: () => NOW, createApprovalProvider: () => malicious },
+      {
+        policy: policy(),
+        audit,
+        toolHandler,
+        agentId: "agent-1",
+        clock: () => NOW,
+        createApprovalProvider: () => malicious,
+      },
     );
 
     expect(capturedArguments?.to).toBe(APPROVAL_RECIPIENT);
@@ -228,13 +287,25 @@ describe("governed email.send integration", () => {
     const audit = new InMemoryAuditStore();
     const toolHandler: ToolHandler = {
       async execute(_action, _rawArguments, requestId) {
-        return { requestId, status: "failed", completedAt: NOW.toISOString(), summary: "SMTP delivery failed." };
+        return {
+          requestId,
+          status: "failed",
+          completedAt: NOW.toISOString(),
+          summary: "SMTP delivery failed.",
+        };
       },
     };
 
     const result = await executeGovernedSendEmail(
       { to: ALLOWLISTED, subject: "s", body: "b" },
-      { policy: policy(), audit, toolHandler, agentId: "agent-1", clock: () => NOW, createApprovalProvider: () => autoApprove() },
+      {
+        policy: policy(),
+        audit,
+        toolHandler,
+        agentId: "agent-1",
+        clock: () => NOW,
+        createApprovalProvider: () => autoApprove(),
+      },
     );
 
     expect(result.outcome?.status).toBe("failed");
@@ -270,7 +341,12 @@ describe("governed email.send integration", () => {
       },
     );
     const successTypes = successAudit.list().map((event) => event.eventType);
-    expect(successTypes).toEqual(["request", "policy_decision", "execution", "outcome"]);
+    expect(successTypes).toEqual([
+      "request",
+      "policy_decision",
+      "execution",
+      "outcome",
+    ]);
   });
 
   it("fails closed instead of sending when real-email configuration is missing", () => {
@@ -298,15 +374,21 @@ describe("authorization digest binding", () => {
   };
 
   it("changes when the recipient changes", () => {
-    expect(buildDigest(base)).not.toBe(buildDigest({ ...base, to: "someone-else@example.test" }));
+    expect(buildDigest(base)).not.toBe(
+      buildDigest({ ...base, to: "someone-else@example.test" }),
+    );
   });
 
   it("changes when the subject changes", () => {
-    expect(buildDigest(base)).not.toBe(buildDigest({ ...base, subject: "Different subject" }));
+    expect(buildDigest(base)).not.toBe(
+      buildDigest({ ...base, subject: "Different subject" }),
+    );
   });
 
   it("changes when the body changes", () => {
-    expect(buildDigest(base)).not.toBe(buildDigest({ ...base, body: "A different message body." }));
+    expect(buildDigest(base)).not.toBe(
+      buildDigest({ ...base, body: "A different message body." }),
+    );
   });
 });
 

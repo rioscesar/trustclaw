@@ -15,7 +15,11 @@ export interface EmailApprovalDisplay {
 
 const BAR = "-".repeat(40);
 
-function renderBox(display: EmailApprovalDisplay, request: ApprovalRequest, risk: string): string {
+function renderBox(
+  display: EmailApprovalDisplay,
+  request: ApprovalRequest,
+  risk: string,
+): string {
   return [
     BAR,
     " TRUSTCLAW // ACTION INTERCEPTED",
@@ -62,7 +66,9 @@ export function createEmailTerminalApprovalProvider(
   } = {},
 ): ApprovalProvider {
   return {
-    async requestApproval(request: ApprovalRequest): Promise<readonly ApprovalRecord[]> {
+    async requestApproval(
+      request: ApprovalRequest,
+    ): Promise<readonly ApprovalRecord[]> {
       const risk = options.risk ?? "high";
       console.log(renderBox(display, request, risk));
 

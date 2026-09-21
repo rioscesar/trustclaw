@@ -1,19 +1,27 @@
 import { existsSync } from "node:fs";
 import { loadEnvFile } from "node:process";
 
-import { runEmailScenario, findApprover, type ScenarioName } from "./email-scenarios.js";
+import {
+  runEmailScenario,
+  findApprover,
+  type ScenarioName,
+} from "./email-scenarios.js";
 import { formatAuthorizedEvidence, formatDeniedEvidence } from "./evidence.js";
 
 if (existsSync(".env")) {
   loadEnvFile(".env");
 }
 
-const scenarioArg = process.argv.find((value) => value.startsWith("--scenario="));
+const scenarioArg = process.argv.find((value) =>
+  value.startsWith("--scenario="),
+);
 const requested = scenarioArg?.split("=")[1] ?? "approve";
 const interactive = process.argv.includes("--interactive");
 
 if (requested !== "allow" && requested !== "approve" && requested !== "deny") {
-  console.error(`Unknown scenario "${requested}". Use --scenario=allow|approve|deny.`);
+  console.error(
+    `Unknown scenario "${requested}". Use --scenario=allow|approve|deny.`,
+  );
   process.exitCode = 1;
   process.exit();
 }

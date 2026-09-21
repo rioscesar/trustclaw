@@ -40,10 +40,12 @@ describe("email policy", () => {
   });
 
   it("denies a forbidden recipient domain", () => {
-    expect(policy.evaluate(request("customer@customer.example"))).toMatchObject({
-      disposition: "deny",
-      reasonCode: "FORBIDDEN_RECIPIENT",
-    });
+    expect(policy.evaluate(request("customer@customer.example"))).toMatchObject(
+      {
+        disposition: "deny",
+        reasonCode: "FORBIDDEN_RECIPIENT",
+      },
+    );
   });
 
   it("denies an individually forbidden recipient", () => {
@@ -54,7 +56,9 @@ describe("email policy", () => {
   });
 
   it("denies unknown governed actions", () => {
-    expect(policy.evaluate(request("someone@example.test", "gmail.delete_email"))).toMatchObject({
+    expect(
+      policy.evaluate(request("someone@example.test", "gmail.delete_email")),
+    ).toMatchObject({
       disposition: "deny",
       reasonCode: "UNKNOWN_GOVERNED_ACTION",
     });
@@ -84,7 +88,9 @@ describe("email policy", () => {
   });
 
   it("is case- and whitespace-insensitive when matching recipients", () => {
-    expect(policy.evaluate(request("  Demo-Safe@Example.TEST  "))).toMatchObject({
+    expect(
+      policy.evaluate(request("  Demo-Safe@Example.TEST  ")),
+    ).toMatchObject({
       disposition: "allow",
     });
   });
