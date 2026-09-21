@@ -8,9 +8,7 @@
   "include": ["src/**/*.ts"],
   "references": [
     { "path": "../contracts" },
-    { "path": "../policy-engine" },
     { "path": "../gateway" },
-    { "path": "../email-adapter" },
-    { "path": "../email-integration" }
+    { "path": "../policy-engine" }
   ]
 }

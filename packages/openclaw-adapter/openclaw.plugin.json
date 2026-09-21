@@ -1,0 +1,44 @@
+{
+  "id": "trustclaw-email",
+  "name": "TrustClaw Governed Email",
+  "description": "Sends email through the TrustClaw authorization gateway: policy, approval, and audit are unavoidable.",
+  "categories": ["other"],
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "agentId": {
+        "type": "string",
+        "description": "Identity recorded on every authorization request."
+      },
+      "allowedLowRiskRecipients": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Recipients that may receive email without human approval."
+      },
+      "deniedRecipients": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Recipient addresses that must never receive email."
+      },
+      "deniedDomains": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Recipient domains that must never receive email."
+      }
+    },
+    "additionalProperties": false
+  },
+  "version": "0.1.0",
+  "contracts": {
+    "tools": ["send_email"]
+  }
+}

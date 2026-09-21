@@ -1,5 +1,5 @@
 {
-  "name": "@trustclaw/cli",
+  "name": "@trustclaw/email-integration",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,8 +11,6 @@
   },
   "dependencies": {
     "@trustclaw/contracts": "workspace:*",
-    "@trustclaw/email-adapter": "workspace:*",
-    "@trustclaw/email-integration": "workspace:*",
     "@trustclaw/gateway": "workspace:*",
     "@trustclaw/policy-engine": "workspace:*"
   }

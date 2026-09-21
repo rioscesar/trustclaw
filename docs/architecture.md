@@ -13,7 +13,16 @@
 
 ### Runtime adapter
 
-The milestone's CLI converts a simulated OpenClaw-like tool proposal into TrustClaw's runtime-neutral authorization request. A real OpenClaw adapter is intentionally deferred and must eventually fail closed for configured governed actions when the gateway cannot be reached.
+`packages/openclaw-adapter` is the only OpenClaw-specific package. Its
+`send_email` tool factory creates an `EmailPolicyEngine`, terminal approval
+provider, configured email handler, and one shared in-memory audit store per
+Gateway process, then passes them to the runtime-neutral governed email
+execution path. The OpenClaw model selects the tool normally; it is not asked
+to reason about or enforce TrustClaw policy.
+
+The adapter is an unavoidable boundary only for this plugin tool. Demo
+configuration must not expose another email-capable tool to the demo agent.
+The runtime-neutral packages do not import the OpenClaw SDK.
 
 ### TrustClaw gateway
 
@@ -44,6 +53,26 @@ An append-only in-memory adapter stores audit events. Each event includes the pr
 
 The gateway exposes boundaries where telemetry can later represent the agent request, policy decision, approval wait, tool execution, and outcome. No OpenTelemetry exporter is included yet. Sensitive tool arguments must be redacted before any future export.
 
+## Email transport boundary
+
+The email adapter selects its transport explicitly with
+`TRUSTCLAW_EMAIL_MODE`:
+
+- `simulated` never contacts a mail server and is the dependency-free default.
+- `real` requires complete SMTP configuration from the process environment.
+  Missing or invalid configuration fails closed before tool execution.
+
+SMTP credentials are passed only to the SMTP handler. They are never written
+to approval context, audit metadata, evidence output, or repository files.
+
+## Demo audit evidence
+
+After a successful governed OpenClaw send, the plugin renders the existing CLI
+authorized-evidence formatter to Gateway stdout. It uses the actual completed
+execution's request digest, finds the approval event bound to that digest, and
+calls `verify()` on the same in-memory audit store that recorded the run.
+`VERIFIED` is therefore computed, not a presentation default.
+
 ## Initial trust boundary
 
 TrustClaw governs only calls routed through `TrustClawGateway`. The current Gmail handler is simulated, and direct tool access outside the gateway is out of scope and must not be described as governed.
@@ -56,7 +85,10 @@ trustclaw/
 │   ├── contracts/
 │   ├── policy-engine/
 │   ├── gateway/
-│   └── cli/
+│   ├── cli/
+│   ├── email-adapter/
+│   ├── email-integration/
+│   └── openclaw-adapter/
 ├── examples/
 ├── config/
 ├── docs/

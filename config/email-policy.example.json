@@ -1,0 +1,6 @@
+{
+  "version": "trustclaw-email-policy-v1",
+  "allowedLowRiskRecipients": ["demo-safe@example.test"],
+  "deniedRecipients": [],
+  "deniedDomains": ["customer.example"]
+}
